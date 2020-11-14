@@ -1,0 +1,34 @@
+<table>
+  <thead>
+    <tr>
+      <th>Query</th>
+      <th>Time</th>
+      <th>Perc</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for query in queries %}
+    <tr class="{{ loop.cycle('flDebugOdd', 'flDebugEven') }}">
+      <td style="padding: 5px;">
+        <details>
+          <summary>
+            {{ query.short_statement }}
+          </summary>
+          {{ query.formatted_statement|safe }}
+        </details>
+        {% if query.repeat_count > 1 %}
+          <p><strong>Repeated {{ query.repeat_count }} times.</strong></p>
+        {% endif %}
+      </td>
+      <td>{{ "{:.1f}".format(query.duration) }}ms</td>
+      <td>{{ "{:.1f}".format(query.percent_duration) }}%</td>
+      <td>
+        <progress value="{{ query.duration }}" max="{{ max_duration }}">
+          {{ query.duration }}ms
+        </progress>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

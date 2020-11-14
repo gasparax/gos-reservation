@@ -1,0 +1,65 @@
+Metadata-Version: 2.1
+Name: flask-debugtoolbar-sqlalchemy
+Version: 0.2.0
+Summary: Flask Debug Toolbar panel for SQLAlchemy
+Home-page: https://git.sr.ht/~ihabunek/flask_debugtoolbar_sqlalchemy
+Author: Ivan Habunek
+Author-email: ivan@habunek.com
+License: GPL-3
+Keywords: flask debug toolbar sqlalchemy panel
+Platform: UNKNOWN
+Classifier: Framework :: Flask
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Programming Language :: Python :: 3 :: Only
+Description-Content-Type: text/markdown
+Requires-Dist: flask-debugtoolbar
+Requires-Dist: sqlalchemy
+Requires-Dist: sqlparse
+Requires-Dist: Pygments
+
+Flask debug toolbar SQLAlchemy panel
+====================================
+
+Similar to the
+[builtin SQLAlchemy toolbar](https://flask-debugtoolbar.readthedocs.io/en/latest/panels.html#sqlalchemy)
+but does not require the `Flask-SQLAlchemy` extension.
+
+Displayed in toolbar:
+
+![Toolbar view](http://bezdomni.net/pics/sqlalchemy_panel_1.png)
+
+Panel details:
+
+![Panel view](http://bezdomni.net/pics/sqlalchemy_panel_2.png)
+
+Install
+-------
+
+From the cheese shop:
+
+```
+pip install flask-debugtoolbar-sqlalchemy
+```
+
+Setup
+-----
+
+Bootstrap the toolbar
+[as usual](https://flask-debugtoolbar.readthedocs.io/en/latest/#usage) and add
+SQLAlchemyPanel to the list of panels.
+
+```py
+from flask import Flask
+from flask_debugtoolbar import DebugToolbarExtension
+
+app = Flask(__name__)
+app.debug = True
+
+toolbar = DebugToolbarExtension(app)
+
+app.config['DEBUG_TB_PANELS'] += (
+    'flask_debugtoolbar_sqlalchemy.SQLAlchemyPanel',
+)
+```
+
+
