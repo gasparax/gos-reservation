@@ -13,7 +13,7 @@ class Reservation(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     
-    user_id = db.Column(db.Integer)
+    user_id= db.Column(db.Integer)
     table_id = db.Column(db.Integer)
     restaurant_id = db.Column(db.Integer)
 
@@ -23,13 +23,16 @@ class Reservation(db.Model):
     end_time = db.Column(db.DateTime)
     is_confirmed = db.Column(db.Boolean, default=False)
 
-    def __init__(self, user, table, restaurant, people_number, start_time):
-        self.user = user
-        self.table = table
-        self.restaurant = restaurant
+    def serialize(self):
+        return dict([(k,v) for k,v in self.__dict__.items() if k[0] != '_'])
+
+    def __init__(self, user_id, table_id, restaurant_id, people_number, start_time):
+        self.user_id = user_id
+        self.table_id = table_id
+        self.restaurant_id = restaurant_id
         self.people_number = people_number
         self.start_time = start_time        
-        self.set_end_time_by_avg_stay(restaurant.avg_stay)    
+        self.set_end_time_by_avg_stay(restaurant_id.avg_stay)    
 
     @staticmethod
     def check_time(start_time, end_time):
@@ -41,19 +44,19 @@ class Reservation(db.Model):
         if avg_stay is None or avg_stay == 0:
             self.end_time = self.start_time + timedelta(hours=self.MAX_TIME_RESERVATION)
         else:
-            avg_stay = self.restaurant.avg_stay
+            avg_stay = self.restaurant_id.avg_stay
             h_avg_stay = avg_stay//60
             m_avg_stay = avg_stay - (h_avg_stay*60)
             self.end_time = self.start_time + timedelta(hours=h_avg_stay, minutes=m_avg_stay)
 
-    def set_user(self, user):
-        self.user = user
+    def set_user_id(self, user_id):
+        self.user_id = user_id
 
-    def set_table(self, table):
-        self.table = table
+    def set_table_id(self, table_id):
+        self.table_id = table_id
 
-    def set_restaurant(self, restaurant):
-        self.restaurant = restaurant
+    def set_restaurant_id(self, restaurant_id):
+        self.restaurant_id = restaurant_id
 
     def set_people_number(self, people_number):
         self.people_number = people_number

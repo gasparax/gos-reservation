@@ -1,12 +1,11 @@
 import os
 
-from celery import Celery
 from flask import Flask
-from flask_bootstrap import Bootstrap
-from flask_datepicker import datepicker
 from flask_environments import Environments
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+import connexion
+from connexion.resolver import RestyResolver
 
 __version__ = '0.1'
 
@@ -14,7 +13,6 @@ db = None
 migrate = None
 login = None
 debug_toolbar = None
-celery = None
 
 
 def create_app():
@@ -26,9 +24,9 @@ def create_app():
     global app
     global migrate
     global login
-    global celery
 
-    app = Flask(__name__, instance_relative_config=True)
+    conn = connexion.App(__name__)#, instance_relative_config=True)
+    app = conn.app
 
     flask_env = os.getenv('FLASK_ENV', 'None')
     if flask_env == 'development':
@@ -50,18 +48,9 @@ def create_app():
         app=app
     )
 
-    # creating celery
-    celery = make_celery(app)
-
     # requiring the list of models
-
     register_extensions(app)
     register_blueprints(app)
-    register_handlers(app)
-
-    # loading login manager
-    import gooutsafe.auth as auth
-    login = auth.init_login_manager(app)
 
     # creating migrate
     migrate = Migrate(
@@ -77,6 +66,8 @@ def create_app():
     if flask_env == 'testing' or flask_env == 'development':
         register_test_blueprints(app)
 
+    conn.add_api('../swagger.yml')
+    
     return app
 
 
@@ -95,10 +86,6 @@ def register_extensions(app):
         except ImportError:
             pass
 
-    # adding bootstrap and date picker
-    Bootstrap(app)
-    datepicker(app)
-
 
 def register_blueprints(app):
     """
@@ -106,7 +93,7 @@ def register_blueprints(app):
     :param app: Flask Application Object
     :return: None
     """
-    from gooutsafe.views import blueprints
+    from restaurants.views import blueprints
     for bp in blueprints:
         app.register_blueprint(bp, url_prefix='/')
 
@@ -118,45 +105,5 @@ def register_test_blueprints(app):
     :return: None
     """
 
-    from gooutsafe.views.utils import utils
+    from restaurants.views.utils import utils
     app.register_blueprint(utils)
-
-
-def make_celery(app):
-    """
-    This function create celery instance.
-
-    :param app: Application Object
-    :return: Celery instance
-    """
-    redis_host = os.getenv('REDIS_HOST', 'localhost')
-    redis_port = os.getenv('REDIS_PORT', 6379)
-
-    backend = broker = 'redis://%s:%d' % (redis_host, redis_port)
-
-    _celery = Celery(
-        app.name,
-        broker=broker,
-        backend=backend
-    )
-    _celery.conf.timezone = 'Europe/Rome'
-    _celery.conf.update(app.config)
-
-    class ContextTask(_celery.Task):
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    return _celery
-
-
-def register_handlers(app):
-    """
-    This function registers all handlers to application
-    :param app: application object
-    :return: None
-    """
-    from .handlers import page_404, error_500
-
-    app.register_error_handler(404, page_404)
-    app.register_error_handler(500, error_500)
