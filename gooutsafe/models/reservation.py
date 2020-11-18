@@ -31,8 +31,9 @@ class Reservation(db.Model):
         self.table_id = table_id
         self.restaurant_id = restaurant_id
         self.people_number = people_number
-        self.start_time = start_time        
-        self.set_end_time_by_avg_stay(restaurant_id.avg_stay)    
+        self.start_time = start_time  
+        self.end_time = self.start_time + timedelta(hours=self.MAX_TIME_RESERVATION)     
+        #self.set_end_time_by_avg_stay(restaurant_id.avg_stay)    
 
     @staticmethod
     def check_time(start_time, end_time):
@@ -40,6 +41,7 @@ class Reservation(db.Model):
         if start_time >= end_time:
             raise ValueError('The start time cannot be greater than end_time')
 
+    """    
     def set_end_time_by_avg_stay(self, avg_stay):
         if avg_stay is None or avg_stay == 0:
             self.end_time = self.start_time + timedelta(hours=self.MAX_TIME_RESERVATION)
@@ -48,6 +50,7 @@ class Reservation(db.Model):
             h_avg_stay = avg_stay//60
             m_avg_stay = avg_stay - (h_avg_stay*60)
             self.end_time = self.start_time + timedelta(hours=h_avg_stay, minutes=m_avg_stay)
+    """
 
     def set_user_id(self, user_id):
         self.user_id = user_id

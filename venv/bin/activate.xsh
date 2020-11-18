@@ -28,7 +28,7 @@ def _deactivate(args):
 _deactivate(["nondestructive"])
 aliases["deactivate"] = _deactivate
 
-$VIRTUAL_ENV = r"/home/nunzio/ASE/Homework_2/ase-GoOutSafe-s4/venv"
+$VIRTUAL_ENV = r"/home/nunzio/ASE/Homework_3/reservation/gos-reservation/venv"
 
 $_OLD_VIRTUAL_PATH = $PATH
 $PATH = $PATH[:]

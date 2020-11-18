@@ -1,0 +1,306 @@
+openapi: 3.0.1
+info:
+  title: Reservation Service API
+  description: Reservation from GoOutSafe with Microservices
+  version: "0.1"
+servers:
+- url: /
+
+paths:
+
+  /reservation/restaurant/{restaurant_id}:
+    get:
+      tags:
+      - Reservation
+      summary: Get all reservation for a restaurant
+      operationId: gooutsafe.resources.reservation.get_all_reservation_restaurant
+      parameters:
+      - name: restaurant_id
+        in: path
+        description: Restaurant's Unique identifier
+        required: true
+        schema:
+          type: integer      
+      responses:
+        200:
+          description: Return all reservation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /reservation/restaurant/{customer_id}:
+    get:
+      tags:
+      - Reservation
+      summary: Get all reservation for a customer
+      operationId: gooutsafe.resources.reservation.get_all_reservation_customer
+      parameters:
+      - name: customer_id
+        in: path
+        description: Customer's Unique identifier
+        required: true
+        schema:
+          type: integer      
+      responses:
+        200:
+          description: Return all reservation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /reservation/restaurants/{restaurant_id}:
+    post:
+      tags:
+      - Reservation
+      summary: Create a new reservation
+      operationId: gooutsafe.resources.reservation.create_reservation
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                  restaurant_id:
+                    type: integer
+                  start_time:
+                    type: string
+                required:
+                  - user_id
+                  - restaurant_id
+                  - start_time
+      parameters:
+      - name: restaurant_id
+        in: path
+        description: Restaurant's Unique identifier
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Reservation successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        400:
+          description: Error in the data validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+                
+  /reservation/edit/{restaurant_id}/{reservation_id}:
+    put:
+      tags:
+      - Reservation
+      summary: Edit a reservation
+      operationId: gooutsafe.resources.reservation.edit_reservation
+      parameters:
+      - name: restaurant_id
+        in: path
+        description: Restaurant's unique identifier
+        required: true
+        schema:
+          type: integer
+      - name: reservation_id
+        in: path
+        description: Reservation's unique identifier
+        required: true
+        schema:
+          type: integer   
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: integer
+                  restaurant_id:
+                    type: integer
+                  start_time:
+                    type: string
+                required:
+                  - user_id
+                  - restaurant_id
+                  - start_time
+      responses:
+        200:
+          description: Reservation successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        400:
+          description: Error in the data validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /reservation/delete/{restaurant_id}/{reservation_id}:
+    delete:
+      tags:
+      - Reservation
+      summary: Delete a reservation
+      operationId: gooutsafe.resources.reservation.delete_reservation
+      parameters:
+      - name: restaurant_id
+        in: path
+        description: Restaurant's unique identifier
+        required: true
+        schema:
+          type: integer
+      - name: reservation_id
+        in: path
+        description: Reservation's unique identifier
+        required: true
+        schema:
+          type: integer
+      responses:
+        200:
+          description: Reservation successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        400:
+          description: Error in the data validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /reservation/confirm/{restaurant_id}/{reservation_id}:
+    put:
+      tags:
+      - Reservation
+      summary: Confirm a reservation
+      operationId: gooutsafe.resources.reservation.confirm_reservation
+      parameters:
+      - name: restaurant_id
+        in: path
+        description: Restaurant's unique identifier
+        required: true
+        schema:
+          type: integer
+      - name: reservation_id
+        in: path
+        description: Reservation's unique identifier
+        required: true
+        schema:
+          type: integer   
+      responses:
+        200:
+          description: Reservation successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        400:
+          description: Error in the data validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+components:
+  schemas:
+    Reservation:
+      required:
+      - id
+      - user_id
+      - table_id
+      - restaurant_id
+      - people_number
+      - timestamp
+      - start_time
+      - end_time 
+      - is_confirmed
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          readOnly: true
+          example: 1
+        user_id:
+          type: integer
+          description: Unique identifier
+          readOnly: true
+          example: 3
+        table_id:
+          type: integer
+          description: Unique identifier
+          readOnly: true
+          example: 1
+        restaurant_id:
+          type: integer
+          description: Unique identifier
+          readOnly: true
+          example: 2          
+        people_number:
+          type: integer
+          description: Person number
+          example: 4
+        timestamp:
+          minLength: 1
+          type: string
+          description: Timestamp of the reservation, is setted automatically
+          example: "2020-11-06 19:54:15.476008"
+        start_time:
+          minLength: 1
+          type: string
+          description: Start_time of the reservation
+          example: "2020-11-06 20:00"
+        end_time:
+          minLength: 1
+          type: string
+          description: End_time of the reservation, is setted automatically. Is summed the start_time with the avg stay time of the restaurant
+          example: "2020-11-06 23:00"
+        is_confirmed:
+          type: boolean
+          description: Is used to confirm if the customer acctualy went in the restaurant
+          example: True
+       
+    Response:
+      description: Standard json response template
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          example: 'Success'
+        message:
+          type: string
+          example: 'Reservation successfully added'
