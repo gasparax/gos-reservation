@@ -1,11 +1,9 @@
 import os
 
-from flask import Flask
 from flask_environments import Environments
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 import connexion
-from connexion.resolver import RestyResolver
 
 __version__ = '0.1'
 
@@ -13,6 +11,7 @@ db = None
 migrate = None
 login = None
 debug_toolbar = None
+app = None
 
 
 def create_app():
