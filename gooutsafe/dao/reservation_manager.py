@@ -55,6 +55,18 @@ class ReservationManager(Manager):
         return Reservation.query.filter(Reservation.table_id==table_id).all()
 
     @staticmethod
+    def retrieve_by_date_time_table(table_id, start_time, end_time):
+        Manager.check_none(table_id=table_id)
+        Manager.check_none(start_time=start_time)
+        Manager.check_none(end_time=end_time)
+        
+        cond1 = db.and_(Reservation.start_time >= start_time, Reservation.start_time < end_time)
+        cond2 = db.and_(Reservation.end_time > start_time, Reservation.end_time <= end_time)
+        cond3 = db.or_(cond1,cond2)
+        cond4 = db.and_(cond3, Reservation.table_id==table_id)
+        return Reservation.query.filter(cond4).all()
+
+    @staticmethod
     def retrieve_by_date_and_time(restaurant_id, start_time, end_time):
         Manager.check_none(restaurant_id=restaurant_id)
         Manager.check_none(start_time=start_time)
@@ -80,3 +92,8 @@ class ReservationManager(Manager):
     def delete_reservation_by_id(id_: int):
         reservation = ReservationManager.retrieve_by_id(id_)
         ReservationManager.delete_reservation(reservation)
+
+    @staticmethod
+    def delete_all_restaurant_reservation(restaurant_id):
+        Manager.check_none(restaurant_id=restaurant_id)
+        Reservation.query.filter(Reservation.restaurant_id==restaurant_id).delete()
