@@ -25,13 +25,14 @@ class ReservationResTest(ResourceTest):
         start_datetime = '2020-11-30 19:54:15'
         people_number = 1
         data = {'user_id': 1,
+                'restaurant_id': 1,
                 'start_time': start_datetime,
                 'people_number': people_number,
                 'tables': tables,
                 'times': times}
         restaurant_id = 1
         self.reservation_manager.delete_all_restaurant_reservation(restaurant_id)
-        response = self.client.post('/reservation/restaurants/create/' + str(restaurant_id), json=data)
+        response = self.client.post('/reservation/', json=data)
         json_response = response.json
         assert response.status_code == 400
 
@@ -47,26 +48,27 @@ class ReservationResTest(ResourceTest):
         start_datetime = '2020-11-30 16:00:00'
         people_number = 1
         data = {'user_id': 1,
+                'restaurant_id': 1,
                 'start_time': start_datetime,
                 'people_number': people_number,
                 'tables': tables,
                 'times': times}
         restaurant_id = 1
         self.reservation_manager.delete_all_restaurant_reservation(restaurant_id)
-        response = self.client.post('/reservation/restaurants/create/' + str(restaurant_id), json=data)
+        response = self.client.post('/reservation/', json=data)
         json_response = response.json
         assert response.status_code == 200  
 
 
     def test_delete_reservation_500(self):
-        response = self.client.delete('/reservation/delete/' + str(0) + '/' + str(0))
+        response = self.client.delete('/reservation/' + str(0))
         assert response.status_code == 500
 
 
     def test_delete_reservation_200(self):
         reservation, restaurant_id = self.add_reservation()
         reservation_id = reservation.id
-        response = self.client.delete('/reservation/delete/' + str(restaurant_id) + '/' + str(reservation_id))
+        response = self.client.delete('/reservation/' + str(reservation_id))
         assert response.status_code == 200
 
     def test_get_all_reservation_restaurant_400(self):
@@ -108,7 +110,7 @@ class ReservationResTest(ResourceTest):
                 'times': times}
         reservation, restaurant_id = self.add_reservation()
         reservation_id = reservation.id
-        response = self.client.put('/reservation/edit/' + str(restaurant_id) + '/' + str(reservation_id), json=data)
+        response = self.client.put('/reservation/' + str(reservation_id), json=data)
         json_response = response.json
         assert response.status_code == 400
 
@@ -132,21 +134,22 @@ class ReservationResTest(ResourceTest):
         old_reservation, _ = self.test_reservation.generate_random_reservation(restaurant_id=1)
         self.reservation_manager.create_reservation(old_reservation)
         reservation_id = old_reservation.id
-        response = self.client.put('/reservation/edit/' + str(1) + '/' + str(reservation_id), json=data)
+        response = self.client.put('/reservation/' + str(reservation_id), json=data)
         assert response.status_code == 200
         
 
     def test_confirm_reservation_400(self):
-        response = self.client.put('/reservation/confirm/' + str(1) + '/' + str(0))
+        response = self.client.put('/reservation/confirm/' + str(0))
         assert response.status_code == 400
 
 
     def test_confirm_reservation_200(self):
         reservation, restaurant_id = self.add_reservation()
         reservation_id = reservation.id
-        print(reservation_id)
-        response = self.client.put('/reservation/confirm/' + str(restaurant_id) + '/' + str(reservation_id))
+        response = self.client.put('/reservation/confirm/' + str(reservation_id))
         assert response.status_code == 200
+        self.reservation_manager.delete_reservation_by_id(reservation_id)
+
 
 
 # Tests on helper methods (TODO: refactoring)

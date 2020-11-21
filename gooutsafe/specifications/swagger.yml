@@ -71,13 +71,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-
-  /reservation/restaurants/create/{restaurant_id}:
+  
+  /reservation/:
     post:
       tags:
       - Reservation
       summary: Create a new reservation
-      operationId: gooutsafe.resources.reservation.create_reservation
+      operationId: gooutsafe.resources.reservation.create_reservation           
       requestBody:
           required: true
           content:
@@ -86,6 +86,8 @@ paths:
                 type: object
                 properties:
                   user_id:
+                    type: integer
+                  restaurant_id:
                     type: integer
                   start_time:
                     type: string
@@ -107,13 +109,6 @@ paths:
                   - people_number
                   - tables
                   - times
-      parameters:
-      - name: restaurant_id
-        in: path
-        description: Restaurant's Unique identifier
-        required: true
-        schema:
-          type: integer
       responses:
         200:
           description: Reservation successfully added
@@ -127,20 +122,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-                
-  /reservation/edit/{restaurant_id}/{reservation_id}:
+
+
+  /reservation/{reservation_id}:
+    
+    
     put:
       tags:
       - Reservation
       summary: Edit a reservation
       operationId: gooutsafe.resources.reservation.edit_reservation
       parameters:
-      - name: restaurant_id
-        in: path
-        description: Restaurant's unique identifier
-        required: true
-        schema:
-          type: integer
       - name: reservation_id
         in: path
         description: Reservation's unique identifier
@@ -154,8 +146,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  user_id:
-                    type: integer
                   start_time:
                     type: string
                   people_number:
@@ -171,7 +161,6 @@ paths:
                     items:
                       $ref: '#/components/schemas/RestaurantAvailability'
                 required:
-                  - user_id
                   - start_time
                   - people_number
                   - tables
@@ -189,20 +178,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-
-  /reservation/delete/{restaurant_id}/{reservation_id}:
+    
     delete:
       tags:
       - Reservation
       summary: Delete a reservation
       operationId: gooutsafe.resources.reservation.delete_reservation
       parameters:
-      - name: restaurant_id
-        in: path
-        description: Restaurant's unique identifier
-        required: true
-        schema:
-          type: integer
       - name: reservation_id
         in: path
         description: Reservation's unique identifier
@@ -223,19 +205,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /reservation/confirm/{restaurant_id}/{reservation_id}:
+  /reservation/confirm/{reservation_id}:
     put:
       tags:
       - Reservation
       summary: Confirm a reservation
       operationId: gooutsafe.resources.reservation.confirm_reservation
       parameters:
-      - name: restaurant_id
-        in: path
-        description: Restaurant's unique identifier
-        required: true
-        schema:
-          type: integer
       - name: reservation_id
         in: path
         description: Reservation's unique identifier

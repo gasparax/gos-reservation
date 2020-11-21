@@ -81,7 +81,7 @@ class TestReservation(ModelTest):
         reservation,_= TestReservation.generate_random_reservation()
         user_id = self.faker.random_int(min=1, max=50000)
         reservation.set_user_id(user_id)
-        self.assertEquals(user_id, reservation.user_id)
+        self.assertEqual(user_id, reservation.user_id)
 
     def test_set_table(self):        
         reservation, _ = TestReservation.generate_random_reservation()

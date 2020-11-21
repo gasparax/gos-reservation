@@ -9,11 +9,10 @@ from datetime import time, timedelta, datetime
 reservation = Blueprint('reservation', __name__)
 
 
-def create_reservation(restaurant_id):
+def create_reservation():
     """This method is used to create a new reservation
-        Linked to route /reservation/restaurants/create/{restaurant_id} [POST]
-    Args:
-        restaurant_id (int): univocal identifier of the restaurant
+        Linked to route /reservation/ [POST]
+
     Returns: 
         Invalid request if the creation of the reservation is not successful
         A json specifying the info needed to render the reservation page otherwise
@@ -21,6 +20,7 @@ def create_reservation(restaurant_id):
     try:
         json_data = request.get_json()
         user_id = json_data['user_id']
+        restaurant_id = json_data['restaurant_id']
         start_time = json_data['start_time']
         people_number = json_data['people_number']
         tables = json_data['tables']
@@ -40,12 +40,11 @@ def create_reservation(restaurant_id):
                     }), 200   
 
 
-def delete_reservation(reservation_id, restaurant_id):
+def delete_reservation(reservation_id):
     """This method is used to delete a reservation
-        Linked to route /reservation/delete/{restaurant_id}/{reservation_id} [DELETE]
+        Linked to route /reservation/{reservation_id} [DELETE]
     Args:
         reservation_id (int): univocal identifier of the reservation
-        restaurant_id (int): univocal identifier of the restaurant
     Returns: 
         Invalid request if the deletion of the reservation is not successful
         A json specifying the info needed to render the reservation page otherwise
@@ -111,11 +110,11 @@ def get_all_reservation_customer(customer_id):
                     'reservations': reservations
                     }), 200
 
-def edit_reservation(restaurant_id, reservation_id):
+def edit_reservation(reservation_id):
     """Allows the customer to edit a single reservation,
     if there's an available table within the opening hours
     of the restaurant.
-    Linked to route reservation/edit/{restaurant_id}/{reservation_id} [PUT]
+    Linked to route reservation/{reservation_id} [PUT]
 
     Args:
         reservation_id (int): univocal identifier of the reservation
@@ -133,6 +132,7 @@ def edit_reservation(restaurant_id, reservation_id):
         tables = json_data['tables']
         times = json_data['times']
         old_reservation = ReservationManager.retrieve_by_id(reservation_id)
+        restaurant_id = old_reservation.restaurant_id
         ReservationManager.delete_reservation(old_reservation)
         table_id, start_time = validate_reservation(tables, times, start_time, people_number)
         if table_id is False:
@@ -149,10 +149,10 @@ def edit_reservation(restaurant_id, reservation_id):
                     'message': 'Reservation succesfully added'
                     }), 200  
 
-def confirm_reservation(restaurant_id, reservation_id):
+def confirm_reservation(reservation_id):
     """
     This method is used to confirm reservation
-    Linked to route /reservation/confirm/{restaurant_id}/{reservation_id} [PUT]
+    Linked to route /reservation/confirm/{reservation_id} [PUT]
     Args:
         reservation_id (Integer): the restaurant id of the reservation
         restaurant_id (Integer): univocal identifier of the restaurant
@@ -163,12 +163,12 @@ def confirm_reservation(restaurant_id, reservation_id):
         A success message
     """
     reservation = ReservationManager.retrieve_by_id(reservation_id)
-    print(reservation)
     if reservation is None:
         return jsonify({'status': 'Bad Request',
                         'message': 'There is not reservation with this id'
         }), 400
     reservation.set_is_confirmed()
+    ReservationManager.update_reservation(reservation)
     return jsonify({'status': 'Success',
                 'message': 'Reservation succesfully confirmed'
                 }), 200  
