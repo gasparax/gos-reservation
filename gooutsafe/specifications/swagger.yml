@@ -40,7 +40,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /reservation/restaurant/{customer_id}:
+  /reservation/customer/{customer_id}:
     get:
       tags:
       - Reservation
@@ -72,7 +72,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /reservation/restaurants/{restaurant_id}:
+  /reservation/restaurants/create/{restaurant_id}:
     post:
       tags:
       - Reservation
@@ -87,14 +87,26 @@ paths:
                 properties:
                   user_id:
                     type: integer
-                  restaurant_id:
-                    type: integer
                   start_time:
                     type: string
+                  people_number:
+                    type: integer
+                  tables:
+                    description: List of the restaurant's tables
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Table'
+                  times:
+                    description: The restaurant opening hours
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RestaurantAvailability'
                 required:
                   - user_id
-                  - restaurant_id
                   - start_time
+                  - people_number
+                  - tables
+                  - times
       parameters:
       - name: restaurant_id
         in: path
@@ -144,14 +156,26 @@ paths:
                 properties:
                   user_id:
                     type: integer
-                  restaurant_id:
-                    type: integer
                   start_time:
                     type: string
+                  people_number:
+                    type: integer
+                  tables:
+                    description: List of the restaurant's tables
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Table'
+                  times:
+                    description: The restaurant opening hours
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RestaurantAvailability'
                 required:
                   - user_id
-                  - restaurant_id
                   - start_time
+                  - people_number
+                  - tables
+                  - times
       responses:
         200:
           description: Reservation successfully added
@@ -291,6 +315,61 @@ components:
           description: Is used to confirm if the customer acctualy went in the restaurant
           example: True
        
+    Table:
+      description: The restaurant's table model
+      required:
+        - id
+        - restaurant_id
+        - capacity
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 123
+        restaurant_id:
+          type: integer
+          description: Restaurant's Unique Identifier
+          example: 123
+        capacity:
+          type: integer
+          description: The table max capacity
+          minimum: 1
+          maximum: 15
+          example: 6
+    
+    RestaurantAvailability:
+      description: The restaurant opening time model
+      required:
+        - id
+        - start_time
+        - end_time
+        - day
+        - restaurant_id
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 123
+        start_time:
+          type: string
+          description: The opening time start time (hour)
+          example: "09:00" # TODO: check if this includes seconds
+        end_time:
+          type: string
+          description: The opening time end time (hour)
+          example: "12:00" # TODO: check if this includes seconds
+        day:
+          type: string
+          description: The opening time week day
+          pattern: '(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day'
+          example: "Tuesday"
+        restaurant_id:
+          type: integer
+          description: Restaurant's Unique Identifier
+          example: 123
+    
     Response:
       description: Standard json response template
       type: object

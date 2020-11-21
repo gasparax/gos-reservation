@@ -3,7 +3,7 @@ from flask import (Blueprint, abort, flash, redirect, render_template, request,
 from gooutsafe.dao.reservation_manager import ReservationManager
 
 from gooutsafe.models.reservation import Reservation
-from datetime import datetime
+from datetime import time, timedelta, datetime
 
 
 reservation = Blueprint('reservation', __name__)
@@ -11,14 +11,33 @@ reservation = Blueprint('reservation', __name__)
 
 def create_reservation(restaurant_id):
     """This method is used to create a new reservation
-        Linked to route /reservation/restaurants/{restaurant_id} [POST]
+        Linked to route /reservation/restaurants/create/{restaurant_id} [POST]
     Args:
         restaurant_id (int): univocal identifier of the restaurant
     Returns: 
         Invalid request if the creation of the reservation is not successful
         A json specifying the info needed to render the reservation page otherwise
     """
-    pass   
+    try:
+        json_data = request.get_json()
+        user_id = json_data['user_id']
+        start_time = json_data['start_time']
+        people_number = json_data['people_number']
+        tables = json_data['tables']
+        times = json_data['times']
+        table_id, start_time = validate_reservation(tables, times, start_time, people_number)
+        if table_id is False:
+            raise ValueError 
+        reservation = Reservation(user_id, table_id, restaurant_id, people_number, start_time) 
+        ReservationManager.create_reservation(reservation)
+    except Exception as e:
+        return jsonify({'status': 'Bad request',
+                        'message': 'The data provided were not correct.\n' + str(e)
+                        }), 400
+    
+    return jsonify({'status': 'Success',
+                    'message': 'Reservation succesfully added'
+                    }), 200   
 
 
 def delete_reservation(reservation_id, restaurant_id):
@@ -31,7 +50,16 @@ def delete_reservation(reservation_id, restaurant_id):
         Invalid request if the deletion of the reservation is not successful
         A json specifying the info needed to render the reservation page otherwise
     """
-    pass
+    try:
+        ReservationManager.delete_reservation_by_id(reservation_id)
+    except Exception as e:
+        return jsonify({'message': 'Error during avg stay updating\n' + str(e),
+                        'status': 'Internal Server Error'
+                        }), 500
+    return jsonify({'message': 'Restaurant successfully deleted'
+                    }), 200
+
+
 
 def get_all_reservation_restaurant(restaurant_id):
     """Returns the whole list of reservations, given a restaurant.
@@ -46,7 +74,18 @@ def get_all_reservation_restaurant(restaurant_id):
         Invalid request if restaurant doesn't exists
         The list of json of the reservations.
     """
-    pass
+    reservations = ReservationManager.retrieve_by_restaurant_id(restaurant_id)
+    reservations = [reservation.serialize() for reservation in reservations]
+    if not reservations:
+        return jsonify({'message': 'No reservation for this restaurant\n',
+                'status': 'Bad Request'
+                }), 400
+    return jsonify({'status': 'Success',
+                    'message': 'The reservations were correctly loaded',
+                    'reservations': reservations
+                    }), 200
+    
+
 
 def get_all_reservation_customer(customer_id):
     """Returns the whole list of reservations, given a customer.
@@ -61,10 +100,18 @@ def get_all_reservation_customer(customer_id):
         Invalid request if customer doesn't exists
         The list of json of the reservations.
     """
-    pass
+    reservations = ReservationManager.retrieve_by_customer_id(customer_id)
+    reservations = [reservation.serialize() for reservation in reservations]
+    if not reservations:
+        return jsonify({'message': 'No reservation for this customer\n',
+                'status': 'Bad Request'
+                }), 400
+    return jsonify({'status': 'Success',
+                    'message': 'The reservations were correctly loaded',
+                    'reservations': reservations
+                    }), 200
 
-
-def edit_reservation(reservation_id, customer_id):
+def edit_reservation(restaurant_id, reservation_id):
     """Allows the customer to edit a single reservation,
     if there's an available table within the opening hours
     of the restaurant.
@@ -72,14 +119,35 @@ def edit_reservation(reservation_id, customer_id):
 
     Args:
         reservation_id (int): univocal identifier of the reservation
-        customer_id (int): univocal identifier of the customer
+        restaurant_id (int): univocal identifier of the restaurant
 
     Returns:
         Invalid request for wrong data or if the reservation doesn't exists
         The json of the edited reservation
     """    
-    pass
-
+    try:
+        json_data = request.get_json()
+        user_id = json_data['user_id']
+        start_time = json_data['start_time']
+        people_number = json_data['people_number']
+        tables = json_data['tables']
+        times = json_data['times']
+        old_reservation = ReservationManager.retrieve_by_id(reservation_id)
+        ReservationManager.delete_reservation(old_reservation)
+        table_id, start_time = validate_reservation(tables, times, start_time, people_number)
+        if table_id is False:
+            ReservationManager.create_reservation(old_reservation)
+            raise ValueError
+        reservation = Reservation(user_id, table_id, restaurant_id, people_number, start_time) 
+        ReservationManager.create_reservation(reservation)
+    except Exception as e:
+        return jsonify({'status': 'Bad request',
+                        'message': 'The data provided were not correct.\n' + str(e)
+                        }), 400
+    
+    return jsonify({'status': 'Success',
+                    'message': 'Reservation succesfully added'
+                    }), 200  
 
 def confirm_reservation(restaurant_id, reservation_id):
     """
@@ -94,11 +162,21 @@ def confirm_reservation(restaurant_id, reservation_id):
         Invalid request if the reservation doesn't exists
         A success message
     """
-    pass
+    reservation = ReservationManager.retrieve_by_id(reservation_id)
+    print(reservation)
+    if reservation is None:
+        return jsonify({'status': 'Bad Request',
+                        'message': 'There is not reservation with this id'
+        }), 400
+    reservation.set_is_confirmed()
+    return jsonify({'status': 'Success',
+                'message': 'Reservation succesfully confirmed'
+                }), 200  
 
 
-# Helper Methods (TODO: refactoring)
-def validate_reservation(restaurant, start_datetime, people_number):
+
+# Helper Methods (TODO: avg_stay check)
+def validate_reservation(tables, times, start_datetime, people_number):
     """
     This method checks if the new reservation overlap with other already 
     present for the restaurant.
@@ -110,43 +188,32 @@ def validate_reservation(restaurant, start_datetime, people_number):
     Returns:
         Teble, Boolean: false in case there are overlap or a table if the restaurant is open and there aren't overlap
     """
-    avg_stay = restaurant.avg_stay
-    if avg_stay is None:
-        end_datetime = start_datetime + timedelta(hours = 3)
-    else:
-        h_avg_stay = avg_stay//60
-        m_avg_stay = avg_stay - (h_avg_stay*60)
-        end_datetime = start_datetime + timedelta(hours=h_avg_stay, minutes=m_avg_stay)
-    print(start_datetime)
-    print(end_datetime)
-    if check_rest_ava(restaurant, start_datetime, end_datetime):
-        tables = TableManager.retrieve_by_restaurant_id(restaurant.id).order_by(Table.capacity)
-        for table in tables:
-            if table.capacity >= people_number:
-                reservation_table = table
-                table_reservations = ReservationManager.retrieve_by_table_id(table_id=table.id)
-                if len(table_reservations) != 0:
-                    for r in table_reservations:
-                        old_start_datetime = r.start_time
-                        old_end_datetime = r.end_time
-                        print(old_start_datetime)
-                        print(old_end_datetime)
-                        if start_datetime.date() == old_start_datetime.date():
-                            if check_time_interval(start_datetime.time(), end_datetime.time(),
-                                                   old_start_datetime.time(), old_end_datetime.time()):
-                                continue
-                            else:
-                                return reservation_table
-                        else:
-                            return reservation_table
-                else:
-                    return reservation_table
-            else:
-                continue
+    start_datetime = datetime.strptime(start_datetime,"%Y-%m-%d %H:%M:%S")
+    end_datetime = start_datetime + timedelta(hours = 3)
+    if not check_rest_ava(times, start_datetime):
+        print('RISTORANTE CHIUSO')
+        return False
+    valid_tables = [table for table in tables if table.get('capacity') >= people_number]
+    for table in valid_tables:
+        reservation_table = table
+        print("CONTROLLO PRENOTAZIONI PER IL TAVOLO " + str(table.get('id')))
+        table_reservations = ReservationManager.retrieve_by_date_time_table(table.get('id'), start_datetime, end_datetime)
+        print("PRENOTAZIONI PRESENTI")
+        print(table_reservations)
+        if len(table_reservations) != 0:
+            print('TAVOLO OCCUPATO')
+            continue
+            #return False
+        else:
+            print('TAVOLO DISPONIBILE')
+            print('TAVOLO N ' + str(reservation_table.get('id')))
+            return reservation_table.get('id'), start_datetime
     return False
+    
 
 
-def check_rest_ava(restaurant, start_datetime, end_datetime):
+
+def check_rest_ava(restaurant_avas, start_datetime):
     """
     This method check if the reservation datetime fall in the retaurant opening hours
     
@@ -158,13 +225,16 @@ def check_rest_ava(restaurant, start_datetime, end_datetime):
     Returns:
         [Boolean]: True if the restaurant is open or False if the restaurant is close
     """
-    availabilities = restaurant.availabilities
+    end_datetime = start_datetime + timedelta(hours = 3)
+    availabilities = restaurant_avas
     week_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     for ava in availabilities:
-        ava_day = ava.day
+        ava_day = ava.get('day')
         res_day = week_days[start_datetime.weekday()]
+        open_time = datetime.strptime(ava.get('start_time'), "%H:%M:%S")
+        close_time = datetime.strptime(ava.get('end_time'), "%H:%M:%S")
         if ava_day == res_day:
-            if check_time_interval(start_datetime.time(), end_datetime.time(), ava.start_time, ava.end_time):
+            if check_time_interval(start_datetime.time(), end_datetime.time(), open_time.time(), close_time.time()):
                 return True
     return False
 

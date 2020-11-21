@@ -18,7 +18,7 @@ class TestReservation(ModelTest):
         cls.reservation = reservation
 
     @staticmethod
-    def generate_random_reservation(user_id=None, restaurant_id=None, start_time_mode=None):
+    def generate_random_reservation(user_id=None, restaurant_id=None, people_number=None,start_time_mode=None):
         from gooutsafe.models.reservation import Reservation
         faker = Faker()
 
@@ -27,7 +27,8 @@ class TestReservation(ModelTest):
         table_id = faker.random_int(min=1, max=50000)
         if restaurant_id is None:
             restaurant_id = faker.random_int(min=1, max=50000)
-        people_number = faker.random_int(min=0,max=10)
+        if people_number is None:
+            people_number = faker.random_int(min=0,max=10)
         if start_time_mode == 'valid_past_contagion_time':
             start_time = faker.date_time_between_dates(datetime.utcnow()-timedelta(days=14), datetime.utcnow())
         elif start_time_mode == 'valid_future_contagion_time':
