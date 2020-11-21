@@ -7,7 +7,7 @@ from gooutsafe import app
 import pika
 
 __REQUIRED_CONFIG_KEYS = ['RABBIT_MQ_HOST', 'RABBIT_MQ_PORT',
-                          'RABBIT_MQ_VHOST', 'RABBIT_MQ_EXCHANGE_NAME', 'RESERVATION_WORKER_QUEUE_NAME']
+                          'RABBIT_MQ_VHOST', 'RESERVATION_WORKER_QUEUE_NAME']
 
 amqp_connection: pika.BlockingConnection
 conf = dict
