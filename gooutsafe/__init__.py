@@ -14,7 +14,7 @@ debug_toolbar = None
 app = None
 
 
-def create_app():
+def create_app(broker_start=False):
     """
     This method create the Flask application.
     :return: Flask App Object
@@ -28,7 +28,7 @@ def create_app():
         __name__,
         server='flask',
         specification_dir='openapi/')
-    
+
     # getting the flask app
     app = api_app.app
 
@@ -47,14 +47,25 @@ def create_app():
     env = Environments(app)
     env.from_object(config_object)
 
+    # loading communications
+    import gooutsafe.comm as comm
+
+    if broker_start:
+        if flask_env != 'testing':
+            comm.init_rabbit_mq()
+        else:
+            comm.disabled = True
+
     # registering db
     db = SQLAlchemy(
         app=app
     )
 
-    # requiring the list of models
-    register_extensions(app)
-    register_blueprints(app)
+    # importing models
+    try:
+        import gooutsafe.models.reservation
+    except ImportError:
+        raise RuntimeError('Cannot import the models!')
 
     # creating migrate
     migrate = Migrate(
@@ -67,12 +78,9 @@ def create_app():
         # we need to populate the db
         db.create_all()
 
-    if flask_env == 'testing' or flask_env == 'development':
-        register_test_blueprints(app)
-
     # registering to api app all specifications
     register_specifications(api_app)
-    
+
     return app
 
 
@@ -91,41 +99,3 @@ def register_specifications(_api_app):
             if file.endswith('.yaml') or file.endswith('.yml'):
                 file_path = folder.joinpath(file)
                 _api_app.add_api(file_path)
-
-
-def register_extensions(app):
-    """
-    It register all extensions
-    :param app: Flask Application Object
-    :return: None
-    """
-    global debug_toolbar
-
-    if app.debug:
-        try:
-            from flask_debugtoolbar import DebugToolbarExtension
-            debug_toolbar = DebugToolbarExtension(app)
-        except ImportError:
-            pass
-
-
-def register_blueprints(app):
-    """
-    This function registers all resources in the flask application
-    :param app: Flask Application Object
-    :return: None
-    """
-    from gooutsafe.resources import blueprints
-    for bp in blueprints:
-        app.register_blueprint(bp, url_prefix='/')
-
-
-def register_test_blueprints(app):
-    """
-    This function registers the blueprints used only for testing purposes
-    :param app: Flask Application Object
-    :return: None
-    """
-
-    from gooutsafe.resources.utils import utils
-    app.register_blueprint(utils)
