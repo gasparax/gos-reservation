@@ -61,7 +61,6 @@ def delete_reservation(reservation_id):
 def filtered_reservations():
     try:
         json_data = request.get_json()
-        print(json_data)
         restaurant_id = json_data['restaurant_id']
         start_time = json_data['start_time']
         end_time = json_data['end_time']
