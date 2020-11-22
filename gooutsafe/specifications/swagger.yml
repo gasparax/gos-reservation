@@ -125,7 +125,37 @@ paths:
 
 
   /reservation/{reservation_id}:
-    
+
+    get:
+      tags:
+      - Reservation
+      summary: Get reservation by id
+      operationId: gooutsafe.resources.reservation.get_reservation
+      parameters:
+      - name: reservation_id
+        in: path
+        description: Reservation's Unique identifier
+        required: true
+        schema:
+          type: integer      
+      responses:
+        200:
+          description: Return a reservation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
     
     put:
       tags:
@@ -204,6 +234,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  
+  /reservation/dates/:
+    post:
+      tags:
+      - Reservation
+      summary: Retrieve reservations fitering by dates
+      operationId: gooutsafe.resources.reservation.filtered_reservations           
+      requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  start_time:
+                    type: string
+                  end_time:
+                    type: string
+                required:
+                  - start_time
+                  - end_time
+      responses:
+        200:
+          description: Reservations successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        400:
+          description: Error in the reservations retrieving
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
 
   /reservation/confirm/{reservation_id}:
     put:
@@ -220,13 +284,13 @@ paths:
           type: integer   
       responses:
         200:
-          description: Reservation successfully added
+          description: Reservation successfully confirmed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
         400:
-          description: Error in the data validation
+          description: Error in the confirmation
           content:
             application/json:
               schema:

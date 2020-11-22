@@ -148,8 +148,48 @@ class ReservationResTest(ResourceTest):
         reservation_id = reservation.id
         response = self.client.put('/reservation/confirm/' + str(reservation_id))
         assert response.status_code == 200
-        self.reservation_manager.delete_reservation_by_id(reservation_id)
+        self.reservation_manager.retrieve_by_id(reservation_id)
 
+    def test_get_reservation_400(self):
+        response = self.client.get('/reservation/' + str(0))
+        assert response.status_code == 400
+
+
+    def test_get_reservation_200(self):
+        reservation, restaurant_id = self.add_reservation()
+        reservation_id = reservation.id
+        response = self.client.get('/reservation/' + str(reservation_id))
+        assert response.status_code == 200
+        self.reservation_manager.retrieve_by_id(reservation_id)
+
+
+    def test_filtered_reservations_400(self):
+        restaurant_id = 0
+        start_datetime = '2020-11-30 16:00:00'
+        end_datetime = '2020-11-30 13:00:00'
+        data = {
+                'restaurant_id': restaurant_id,
+                'start_time': start_datetime,
+                'end_time': end_datetime
+        }
+        response = self.client.post('/reservation/dates/', json=data)
+        assert response.status_code == 400
+
+    def test_filtered_reservations_200(self):
+        reservation, restaurant_id = self.add_reservation()
+        start_date = reservation.start_time.date()
+        end_date = reservation.end_time.date()
+        start_datetime = datetime.strftime(start_date, "%Y-%m-%d")
+        end_datetime = datetime.strftime(end_date, "%Y-%m-%d")
+        start_datetime = '%s 00:00:00' % (datetime.strftime(start_date, "%Y-%m-%d"))
+        end_datetime = '%s 23:00:00' % (datetime.strftime(end_date, "%Y-%m-%d"))
+        data = {
+                'restaurant_id': restaurant_id,
+                'start_time': start_datetime,
+                'end_time': end_datetime
+        }
+        response = self.client.post('/reservation/dates/', json=data)
+        assert response.status_code == 200
 
 
 # Tests on helper methods (TODO: refactoring)

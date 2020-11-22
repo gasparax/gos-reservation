@@ -58,7 +58,28 @@ def delete_reservation(reservation_id):
     return jsonify({'message': 'Restaurant successfully deleted'
                     }), 200
 
+def filtered_reservations():
+    try:
+        json_data = request.get_json()
+        print(json_data)
+        restaurant_id = json_data['restaurant_id']
+        start_time = json_data['start_time']
+        end_time = json_data['end_time']
+        start_time = datetime.strptime(start_time,"%Y-%m-%d %H:%M:%S")
+        end_time = datetime.strptime(end_time,"%Y-%m-%d %H:%M:%S")
+        reservations = ReservationManager.retrieve_by_date_and_time(restaurant_id, start_time, end_time)
+        reservations = [reservation.serialize() for reservation in reservations]
+        if not reservations:
+            raise ValueError 
+    except Exception as e:
+        return jsonify({'message': 'No reservation for those dates\n',
+                'status': 'Bad Request'
+                }), 400
 
+    return jsonify({'status': 'Success',
+                    'message': 'The reservations were correctly loaded',
+                    'reservations': reservations
+                    }), 200
 
 def get_all_reservation_restaurant(restaurant_id):
     """Returns the whole list of reservations, given a restaurant.
@@ -73,9 +94,12 @@ def get_all_reservation_restaurant(restaurant_id):
         Invalid request if restaurant doesn't exists
         The list of json of the reservations.
     """
-    reservations = ReservationManager.retrieve_by_restaurant_id(restaurant_id)
-    reservations = [reservation.serialize() for reservation in reservations]
-    if not reservations:
+    try:
+        reservations = ReservationManager.retrieve_by_restaurant_id(restaurant_id)
+        reservations = [reservation.serialize() for reservation in reservations]
+        if not reservations:
+            raise ValueError
+    except Exception as e:
         return jsonify({'message': 'No reservation for this restaurant\n',
                 'status': 'Bad Request'
                 }), 400
@@ -110,6 +134,17 @@ def get_all_reservation_customer(customer_id):
                     'reservations': reservations
                     }), 200
 
+def get_reservation(reservation_id):
+    reservation = ReservationManager.retrieve_by_id(reservation_id)
+    if reservation is None:
+        return jsonify({'message': 'No reservation for this id\n',
+                'status': 'Bad Request'
+                }), 400
+    return jsonify({'status': 'Success',
+                    'message': 'The reservation were correctly loaded',
+                    'reservations': reservation.serialize()
+                    }), 200
+
 def edit_reservation(reservation_id):
     """Allows the customer to edit a single reservation,
     if there's an available table within the opening hours
@@ -126,12 +161,12 @@ def edit_reservation(reservation_id):
     """    
     try:
         json_data = request.get_json()
-        user_id = json_data['user_id']
         start_time = json_data['start_time']
         people_number = json_data['people_number']
         tables = json_data['tables']
         times = json_data['times']
         old_reservation = ReservationManager.retrieve_by_id(reservation_id)
+        user_id = old_reservation.user_id
         restaurant_id = old_reservation.restaurant_id
         ReservationManager.delete_reservation(old_reservation)
         table_id, start_time = validate_reservation(tables, times, start_time, people_number)
@@ -141,6 +176,7 @@ def edit_reservation(reservation_id):
         reservation = Reservation(user_id, table_id, restaurant_id, people_number, start_time) 
         ReservationManager.create_reservation(reservation)
     except Exception as e:
+        print("MUSCAAAAAAAAA")
         return jsonify({'status': 'Bad request',
                         'message': 'The data provided were not correct.\n' + str(e)
                         }), 400
