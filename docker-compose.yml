@@ -21,6 +21,16 @@ services:
       - rabbit_mq
       - migrations
 
+  background_worker:
+    restart: on-failure
+    extends:
+      service: worker_base
+    command: python background.py
+    depends_on:
+      - db
+      - rabbit_mq
+      - migrations
+
   rabbit_mq:
     image: library/rabbitmq:3.6-management
     ports:

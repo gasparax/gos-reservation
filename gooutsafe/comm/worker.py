@@ -24,11 +24,21 @@ class ReservationWorker:
     def retrieve_all_contact_reservation_by_id(self, message):
         return ReservationManager.retrieve_all_contact_reservation_by_id(message['customer_id'])
 
+    def retrieve_by_customer_id_in_future(self, message):
+        return ReservationManager.retrieve_by_customer_id_in_future(message['customer_id'])
+
+    def retrieve_by_customer_id_in_last_14_days(self, message):
+        return ReservationManager.retrieve_by_customer_id_in_last_14_days(message['customer_id'])
+
     def function_dispatcher(self, message):
         if message['func'] == 'retrieve_by_customer_id':
             return self.retrieve_by_customer_id(message)
         elif message['func'] == 'retrieve_all_contact_reservation_by_id':
             return self.retrieve_all_contact_reservation_by_id(message)
+        elif message['func'] == 'retrieve_by_customer_id_in_future':
+            return self.retrieve_by_customer_id_in_future(message)
+        elif message['func'] == 'retrieve_by_customer_id_in_last_14_days':
+            return self.retrieve_by_customer_id_in_last_14_days(message)
         else:
             raise ValueError('This operation is not implemented')
 
