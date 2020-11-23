@@ -20,7 +20,6 @@ class RestaurantDeletionWorker(ConsumerMixin):
     def on_message(self, body, message):
         message.ack()
         app.logger.info('Received a message of restaurant deletion.')
-        print(body)
         restaurant_id = body['restaurant_id']
         ReservationManager.delete_all_restaurant_reservation(restaurant_id=restaurant_id)
 
