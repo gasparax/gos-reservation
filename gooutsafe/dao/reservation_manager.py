@@ -101,3 +101,8 @@ class ReservationManager(Manager):
     def delete_all_restaurant_reservation(restaurant_id):
         Manager.check_none(restaurant_id=restaurant_id)
         Reservation.query.filter(Reservation.restaurant_id==restaurant_id).delete()
+    
+    @staticmethod
+    def delete_all_user_reservation(user_id):
+        Manager.check_none(user_id=user_id)
+        Reservation.query.filter(Reservation.user_id==user_id).delete()
