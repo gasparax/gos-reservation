@@ -32,7 +32,7 @@ class ReservationResTest(ResourceTest):
                 'times': times}
         restaurant_id = 1
         self.reservation_manager.delete_all_restaurant_reservation(restaurant_id)
-        response = self.client.post('/reservation/', json=data)
+        response = self.client.post('/reservation', json=data)
         json_response = response.json
         assert response.status_code == 400
 
@@ -55,7 +55,7 @@ class ReservationResTest(ResourceTest):
                 'times': times}
         restaurant_id = 1
         self.reservation_manager.delete_all_restaurant_reservation(restaurant_id)
-        response = self.client.post('/reservation/', json=data)
+        response = self.client.post('/reservation', json=data)
         json_response = response.json
         assert response.status_code == 200  
 
