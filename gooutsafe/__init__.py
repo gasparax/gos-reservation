@@ -3,6 +3,7 @@ import os
 from flask_environments import Environments
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+import logging
 import connexion
 
 __version__ = '0.1'
@@ -14,7 +15,7 @@ debug_toolbar = None
 app = None
 
 
-def create_app(broker_start=False):
+def create_app(broker_start=False, log_level=logging.ERROR):
     """
     This method create the Flask application.
     :return: Flask App Object
@@ -47,12 +48,15 @@ def create_app(broker_start=False):
     env = Environments(app)
     env.from_object(config_object)
 
+    # configuring logging
+    logging.basicConfig(level=log_level)
+
     # loading communications
     import gooutsafe.comm as comm
 
     if broker_start:
         if flask_env != 'testing':
-            comm.init_rabbit_mq()
+            comm.init_rabbit_mq(app)
         else:
             comm.disabled = True
 

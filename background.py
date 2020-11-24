@@ -2,25 +2,28 @@
 Background entry point.
 """
 from gooutsafe import create_app
-import signal
-import sys
+from gooutsafe.comm import BackgroundWorkers
+import logging
 
 # creating application starting the broker
-app = create_app(broker_start=True)
+app = create_app(broker_start=True, log_level=logging.INFO)
+
+# creating the manager object
+background_workers = BackgroundWorkers()
 
 
 def main():
-    """Since we have a single worker, we can just import it and execute it"""
-    from gooutsafe.comm.worker import ReservationWorker
-    worker = ReservationWorker()
+    import signal
 
     def signal_handler(signo, frame):
-        worker.stop_run()
+        app.logger.info('Sending stop to background workers...')
+        background_workers.stop()
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    worker.run()
+    # starting workers
+    background_workers.start()
 
 
 if __name__ == '__main__':
