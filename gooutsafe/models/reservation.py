@@ -1,8 +1,5 @@
 from datetime import datetime
 from datetime import timedelta
-
-from sqlalchemy.orm import relationship
-
 from gooutsafe import db
 
 
@@ -12,8 +9,8 @@ class Reservation(db.Model):
     MAX_TIME_RESERVATION = 3
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    
-    user_id= db.Column(db.Integer)
+
+    user_id = db.Column(db.Integer)
     table_id = db.Column(db.Integer)
     restaurant_id = db.Column(db.Integer)
 
@@ -24,16 +21,22 @@ class Reservation(db.Model):
     is_confirmed = db.Column(db.Boolean, default=False)
 
     def serialize(self):
-        return dict([(k,v) for k,v in self.__dict__.items() if k[0] != '_'])
+        def r(v):
+            if type(v) == datetime:
+                return v.__str__()
+            else:
+                return v
+
+        return dict([(k, r(v)) for k, v in self.__dict__.items() if k[0] != '_'])
 
     def __init__(self, user_id, table_id, restaurant_id, people_number, start_time):
         self.user_id = user_id
         self.table_id = table_id
         self.restaurant_id = restaurant_id
         self.people_number = people_number
-        self.start_time = start_time  
-        self.end_time = self.start_time + timedelta(hours=self.MAX_TIME_RESERVATION)     
-        #self.set_end_time_by_avg_stay(restaurant_id.avg_stay)    
+        self.start_time = start_time
+        self.end_time = self.start_time + timedelta(hours=self.MAX_TIME_RESERVATION)
+        # self.set_end_time_by_avg_stay(restaurant_id.avg_stay)
 
     @staticmethod
     def check_time(start_time, end_time):
@@ -71,7 +74,6 @@ class Reservation(db.Model):
     def set_end_time(self, end_time):
         Reservation.check_time(self.start_time, end_time)
         self.end_time = end_time
-    
+
     def set_is_confirmed(self):
         self.is_confirmed = True
-

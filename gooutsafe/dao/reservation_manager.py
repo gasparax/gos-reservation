@@ -43,6 +43,9 @@ class ReservationManager(Manager):
     def retrieve_all_contact_reservation_by_id(id_):
         Manager.check_none(id=id_)
         pos_reservation = ReservationManager.retrieve_by_id(id_)
+        if pos_reservation is None:
+            return []
+
         cond1 = db.and_(Reservation.start_time <= pos_reservation.start_time,
                         pos_reservation.start_time < Reservation.end_time)
         cond2 = db.and_(Reservation.start_time < pos_reservation.end_time,
@@ -63,11 +66,11 @@ class ReservationManager(Manager):
         Manager.check_none(table_id=table_id)
         Manager.check_none(start_time=start_time)
         Manager.check_none(end_time=end_time)
-        
+
         cond1 = db.and_(Reservation.start_time >= start_time, Reservation.start_time < end_time)
         cond2 = db.and_(Reservation.end_time > start_time, Reservation.end_time <= end_time)
-        cond3 = db.or_(cond1,cond2)
-        cond4 = db.and_(cond3, Reservation.table_id==table_id)
+        cond3 = db.or_(cond1, cond2)
+        cond4 = db.and_(cond3, Reservation.table_id == table_id)
         return Reservation.query.filter(cond4).all()
 
     @staticmethod
@@ -100,9 +103,9 @@ class ReservationManager(Manager):
     @staticmethod
     def delete_all_restaurant_reservation(restaurant_id):
         Manager.check_none(restaurant_id=restaurant_id)
-        Reservation.query.filter(Reservation.restaurant_id==restaurant_id).delete()
-    
+        Reservation.query.filter(Reservation.restaurant_id == restaurant_id).delete()
+
     @staticmethod
     def delete_all_user_reservation(user_id):
         Manager.check_none(user_id=user_id)
-        Reservation.query.filter(Reservation.user_id==user_id).delete()
+        Reservation.query.filter(Reservation.user_id == user_id).delete()

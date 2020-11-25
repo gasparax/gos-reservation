@@ -54,7 +54,8 @@ class ReservationWorker(ConsumerMixin):
                 response_object = dict(
                     status='Invalid Operation Received'
                 )
-            except self.ExecutionException:
+            except self.ExecutionException as ex:
+                self.logger.error(ex)
                 # exception already logged
                 response_object = dict(
                     status='Internal Server Error'
@@ -85,22 +86,34 @@ class ReservationWorker(ConsumerMixin):
     @staticmethod
     def __retrieve_by_customer_id(message):
         from gooutsafe.dao.reservation_manager import ReservationManager
-        return ReservationManager.retrieve_by_customer_id(message['customer_id'])
+        reservations = ReservationManager.retrieve_by_customer_id(message['customer_id'])
+        reservations = [reservation.serialize() for reservation in reservations]
+
+        return reservations
 
     @staticmethod
     def __retrieve_all_contact_reservation_by_id(message):
         from gooutsafe.dao.reservation_manager import ReservationManager
-        return ReservationManager.retrieve_all_contact_reservation_by_id(message['customer_id'])
+        reservations = ReservationManager.retrieve_all_contact_reservation_by_id(message['customer_id'])
+        reservations = [reservation.serialize() for reservation in reservations]
+
+        return reservations
 
     @staticmethod
     def __retrieve_by_customer_id_in_future(message):
         from gooutsafe.dao.reservation_manager import ReservationManager
-        return ReservationManager.retrieve_by_customer_id_in_future(message['customer_id'])
+        reservations = ReservationManager.retrieve_by_customer_id_in_future(message['customer_id'])
+        reservations = [reservation.serialize() for reservation in reservations]
+
+        return reservations
 
     @staticmethod
     def __retrieve_by_customer_id_in_last_14_days(message):
         from gooutsafe.dao.reservation_manager import ReservationManager
-        return ReservationManager.retrieve_by_customer_id_in_last_14_days(message['customer_id'])
+        reservations = ReservationManager.retrieve_by_customer_id_in_last_14_days(message['customer_id'])
+        reservations = [reservation.serialize() for reservation in reservations]
+
+        return reservations
 
     def __function_dispatcher(self, message):
         if 'func' not in message or 'customer_id' not in message:
@@ -115,11 +128,11 @@ class ReservationWorker(ConsumerMixin):
                 return self.__retrieve_by_customer_id_in_future(message)
             elif message['func'] == 'retrieve_by_customer_id_in_last_14_days':
                 return self.__retrieve_by_customer_id_in_last_14_days(message)
+            else:
+                raise NotImplementedError('This operation is not implemented')
         except RuntimeError as re:
             self.logger.error(re)
             raise self.ExecutionException('A RuntimeError was raised during execution of function dispatcher')
         except Exception as ex:
             self.logger.error(ex)
             raise self.ExecutionException('An exception was raised during execution of function dispatcher!')
-
-        raise NotImplementedError('This operation is not implemented')
