@@ -20,7 +20,7 @@ class ReservationWorker(ConsumerMixin):
         self.logger = logger
         self.connection = connection
         self.queues = [Queue(conf['RESERVATION_WORKER_QUEUE_NAME'])]
-        self.producer = Producer(connection.clone().channel())
+        self.producer = Producer(Connection(conf['RABBIT_MQ_URL']))
 
     def get_consumers(self, consumer, channel):
         return [consumer(queues=self.queues,
@@ -32,24 +32,33 @@ class ReservationWorker(ConsumerMixin):
     def on_message(self, body, message):
         self.logger.info('Received new message in the queue for reservations worker')
 
+        response_object = None
         try:
-            message_object = json.loads(body, parse_int=True)
-            response_object = self.__function_dispatcher(message_object)
+            message_object = json.loads(body)
         except ValueError as ve:
             self.logger.error('Cannot parse JSON object, %s' % ve)
             response_object = dict(
                 status='Cannot parse JSON object'
             )
-        except NotImplementedError:
-            self.logger.error('Received invalid operation, message=%s' % body)
+        except TypeError as te:
+            self.logger.error('Cannot parse JSON object, %s' % te)
             response_object = dict(
-                status='Invalid Operation Received'
+                status='Cannot parse JSON object'
             )
-        except self.ExecutionException:
-            # exception already logged
-            response_object = dict(
-                status='Internal Server Error'
-            )
+
+        if response_object is None:
+            try:
+                response_object = self.__function_dispatcher(message_object)
+            except NotImplementedError:
+                self.logger.error('Received invalid operation, message=%s' % body)
+                response_object = dict(
+                    status='Invalid Operation Received'
+                )
+            except self.ExecutionException:
+                # exception already logged
+                response_object = dict(
+                    status='Internal Server Error'
+                )
 
         response: str
         try:
@@ -58,7 +67,7 @@ class ReservationWorker(ConsumerMixin):
             self.logger.error('Cannot dump response_object into a JSON, response_object=%s' % response_object)
 
         # checking if the sender has set the reply_to
-        if message.properties['reply_to'] is None:
+        if 'reply_to' not in message.properties:
             self.logger.error('Sender has not set the reply_to, so.. Where should I push the reply?')
             self.logger.error('BTW, the reply is this: %s' % response)
         else:
@@ -66,10 +75,10 @@ class ReservationWorker(ConsumerMixin):
                 body=response,
                 exchange='',
                 routing_key=message.properties['reply_to'],
-                properties=dict(
-                    correlation_id=message.properties['correlation_id']
-                ),
+                correlation_id=message.properties['correlation_id']
             )
+            self.logger.error('Published message with routing key=%s and correlation_id=%s' % (
+                message.properties['reply_to'], message.properties['correlation_id']))
 
         message.ack()
 
