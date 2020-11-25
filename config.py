@@ -2,6 +2,9 @@ class Config(object):
     DEBUG = False
     TESTING = False
 
+    import os
+    RABMQ_SEND_EXCHANGE_NAME = os.getenv('RABMQ_SEND_EXCHANGE_NAME', 'gos')
+
 
 class DebugConfig(Config):
     """
